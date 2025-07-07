@@ -1,0 +1,884 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpresaX - Inovação Sem Limites</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/ScrollTrigger.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f2f5, #dee2e6, #e9ecef);
+            background-size: 300% 300%;
+            animation: holographicGradient 20s ease infinite;
+            font-family: 'Roboto Condensed', sans-serif;
+            color: #333333;
+            line-height: 1.8;
+            overflow-x: hidden;
+            letter-spacing: 0.5px;
+            transition: background 0.3s, color 0.3s;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a202c, #2d3748, #4a5568);
+            color: #e2e8f0;
+        }
+        @keyframes holographicGradient {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(240, 242, 245, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s ease;
+        }
+        header.scrolled {
+            background: rgba(240, 242, 245, 0.98);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        header.dark-mode {
+            background: rgba(26, 32, 44, 0.95);
+        }
+        .nav-menu {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .logo {
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            text-shadow: 0 0 3px rgba(30, 58, 138, 0.2);
+            letter-spacing: 1px;
+        }
+        .hamburger {
+            display: none;
+            font-size: 1.5rem;
+            color: #1e3a8a;
+            cursor: pointer;
+        }
+        .nav-links {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-links li {
+            margin-left: 2rem;
+        }
+        .nav-links li a {
+            color: #333333;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 0.6px;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+        .nav-links li a:hover {
+            color: #1e3a8a;
+            transform: scale(1.05);
+        }
+        .nav-links.dark-mode li a {
+            color: #e2e8f0;
+        }
+        .hero {
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            padding: 1rem 0;
+        }
+        .hero video, .hero img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: 0;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+        .hero .banner-video {
+            z-index: 1;
+            width: 80%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        @media (max-width: 768px) {
+            .hero .banner-video {
+                width: 100%;
+            }
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #333333;
+            padding: 0 2rem;
+        }
+        .hero-content.dark-mode {
+            color: #e2e8f0;
+        }
+        .hero-content h1 {
+            font-size: 5rem;
+            font-family: 'SF Pro Display', sans-serif;
+            font-weight: 700;
+            text-shadow: 0 0 8px rgba(30, 58, 138, 0.2);
+            letter-spacing: 1.5px;
+            animation: glitch 2s linear infinite;
+        }
+        .banner {
+            background: rgba(30, 58, 138, 0.8);
+            color: #ffffff;
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            margin-top: 1.5rem;
+            letter-spacing: 0.8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        @keyframes glitch {
+            2%, 64% { transform: translate(2px, 0) skew(0deg); }
+            4%, 60% { transform: translate(-2px, 0) skew(0deg); }
+            62% { transform: translate(0, 0) skew(5deg); }
+        }
+        .hero-content p {
+            font-size: 1.5rem;
+            max-width: 800px;
+            margin: 1.5rem auto;
+            letter-spacing: 0.5px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #1e3a8a, #6c757d);
+            color: #ffffff;
+            padding: 1rem 2.5rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-family: 'SF Pro Display', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(30, 58, 138, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .cta-button.dark-mode {
+            background: linear-gradient(45deg, #4b6cb7, #9a9ea7);
+        }
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s ease, height 0.5s ease;
+        }
+        .cta-button:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+        .cta-button:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 30px rgba(30, 58, 138, 0.3);
+        }
+        main {
+            padding-top: 80px;
+            flex: 1 0 auto;
+        }
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+        }
+        section.dark-mode h2 {
+            color: #a0aec0;
+        }
+        section h2 {
+            font-size: 3rem;
+            font-family: 'SF Pro Display', sans-serif;
+            color: #1e3a8a;
+            margin-bottom: 2rem;
+            letter-spacing: 1.2px;
+            text-shadow: 0 0 8px rgba(30, 58, 138, 0.1);
+        }
+        .parallax {
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            height: 400px;
+            position: relative;
+            overflow: hidden;
+            margin: 3rem 0;
+        }
+        .services, .about, .contact, .testimonials, .gallery, .pricing, .faq {
+            background: rgba(222, 226, 230, 0.8);
+            border-radius: 15px;
+            padding: 3rem;
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .services.dark-mode, .about.dark-mode, .contact.dark-mode, .testimonials.dark-mode, .gallery.dark-mode, .pricing.dark-mode, .faq.dark-mode {
+            background: rgba(38, 45, 59, 0.8);
+        }
+        .services:hover, .about:hover, .contact:hover, .testimonials:hover, .gallery:hover, .pricing:hover, .faq:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+        ul li {
+            margin: 0.8rem 0;
+            font-size: 1.2rem;
+            letter-spacing: 0.6px;
+            display: flex;
+            align-items: center;
+        }
+        ul li i {
+            margin-right: 0.8rem;
+            color: #1e3a8a;
+        }
+        ul.dark-mode li i {
+            color: #a0aec0;
+        }
+        ol {
+            padding-left: 1.5rem;
+        }
+        ol li {
+            margin: 0.8rem 0;
+            font-size: 1.2rem;
+            letter-spacing: 0.6px;
+        }
+        .service-item {
+            display: flex;
+            align-items: center;
+            width: 45%;
+            min-width: 250px;
+        }
+        .service-item.tech { data-category="tech"; }
+        .service-item.support { data-category="support"; }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .testimonials-slider {
+            display: flex;
+            overflow-x: auto;
+            gap: 1.5rem;
+            padding: 1rem 0;
+            scroll-behavior: smooth;
+        }
+        .testimonial {
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .testimonial.dark-mode {
+            background: rgba(47, 55, 70, 0.9);
+            color: #e2e8f0;
+        }
+        .pricing-table {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .pricing-card.dark-mode {
+            background: rgba(47, 55, 70, 0.9);
+            color: #e2e8f0;
+        }
+        .faq-item {
+            margin: 1rem 0;
+        }
+        .faq-question {
+            cursor: pointer;
+            font-weight: 600;
+            color: #1e3a8a;
+        }
+        .faq-question.dark-mode {
+            color: #a0aec0;
+        }
+        .faq-answer {
+            display: none;
+            margin-top: 0.5rem;
+            color: #555;
+        }
+        .faq-answer.dark-mode {
+            color: #cbd5e0;
+        }
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+        form {
+            display: grid;
+            gap: 1.5rem;
+            max-width: 600px;
+            margin: 0 auto;
+            letter-spacing: 1px;
+            word-spacing: 2px;
+        }
+        form.dark-mode input, form.dark-mode textarea, form.dark-mode select {
+            background: rgba(47, 55, 70, 0.9);
+            color: #e2e8f0;
+            border-color: rgba(160, 174, 192, 0.2);
+        }
+        form.dark-mode input:focus, form.dark-mode textarea:focus, form.dark-mode select:focus {
+            border-color: #4b6cb7;
+            box-shadow: 0 0 12px rgba(75, 108, 183, 0.2);
+        }
+        input, textarea, select {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(30, 58, 138, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            font-size: 1.1rem;
+            color: #333333;
+            font-family: 'Roboto Condensed', sans-serif;
+            letter-spacing: 1px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #1e3a8a;
+            box-shadow: 0 0 12px rgba(30, 58, 138, 0.2);
+            outline: none;
+        }
+        button[type="submit"] {
+            background: linear-gradient(45deg, #1e3a8a, #6c757d);
+            color: #ffffff;
+            padding: 1rem;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'SF Pro Display', sans-serif;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        button[type="submit"].dark-mode {
+            background: linear-gradient(45deg, #4b6cb7, #9a9ea7);
+        }
+        button[type="submit"]:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 25px rgba(30, 58, 138, 0.3);
+        }
+        footer {
+            background: #dee2e6;
+            padding: 2rem;
+            text-align: center;
+            color: #1e3a8a;
+            border-top: 1px solid rgba(30, 58, 138, 0.1);
+            letter-spacing: 0.6px;
+            flex-shrink: 0;
+        }
+        footer.dark-mode {
+            background: #2d3748;
+            color: #a0aec0;
+            border-top-color: rgba(160, 174, 192, 0.1);
+        }
+        footer a {
+            color: #1e3a8a;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        footer a.dark-mode {
+            color: #a0aec0;
+        }
+        footer a:hover {
+            color: #333333;
+        }
+        footer a:hover.dark-mode {
+            color: #e2e8f0;
+        }
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #1e3a8a;
+            color: #ffffff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .back-to-top.dark-mode {
+            background: #4b6cb7;
+        }
+        .back-to-top.show {
+            opacity: 1;
+        }
+        .social-links a {
+            margin: 0 0.5rem;
+            color: #1e3a8a;
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+        .social-links a.dark-mode {
+            color: #a0aec0;
+        }
+        .social-links a:hover {
+            color: #333333;
+        }
+        .social-links a:hover.dark-mode {
+            color: #e2e8f0;
+        }
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(240, 242, 245, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        .loader.dark-mode {
+            background: rgba(26, 32, 44, 0.9);
+        }
+        .loader.hidden {
+            opacity: 0;
+            z-index: -1;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1e3a8a;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        .spinner.dark-mode {
+            border-color: #e2e8f0;
+            border-top-color: #4b6cb7;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 768px) {
+            .hamburger { display: block; }
+            .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: rgba(240, 242, 245, 0.95); padding: 1.5rem; flex-direction: column; }
+            .nav-links.active { display: flex; }
+            .nav-links.dark-mode { background: rgba(26, 32, 44, 0.95); }
+            .nav-links li { margin: 1rem 0; }
+            .hero-content h1 { font-size: 2.5rem; }
+            .hero-content p { font-size: 1.2rem; }
+            section { padding: 3rem 1rem; }
+            section h2 { font-size: 2rem; }
+            .parallax { height: 200px; }
+            .cta-button { padding: 0.8rem 2rem; font-size: 1rem; }
+            form { gap: 1rem; max-width: 300px; }
+            input, textarea, select { padding: 0.8rem; font-size: 1rem; }
+            button[type="submit"] { padding: 0.8rem; font-size: 1rem; }
+            ul li, ol li { font-size: 1rem; }
+            .service-item { width: 100%; }
+            .gallery-grid { grid-template-columns: 1fr; }
+            .testimonial { min-width: 250px; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;700&family=Roboto+Condensed:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="loader">
+        <div class="spinner"></div>
+    </div>
+    <header>
+        <div class="nav-menu">
+            <div class="logo">EmpresaX</div>
+            <div class="hamburger">☰</div>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#services">Serviços</a></li>
+                    <li><a href="#about">Sobre</a></li>
+                    <li><a href="#contact">Contato</a></li>
+                </ul>
+            </nav>
+            <button onclick="toggleDarkMode()" style="margin-left: 1rem; color: #1e3a8a; cursor: pointer;">🌙</button>
+        </div>
+    </header>
+    <main>
+        <section id="home" class="hero">
+            <video autoplay muted loop>
+                <source src="https://videos.pexels.com/video-files/8533891/8533891-hd_1920_1080_30fps.mp4" type="video/mp4">
+            </video>
+            <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&q=80&w=1200&auto=format&fit=crop" alt="Fundo Tecnológico" class="opacity-50">
+            <video class="banner-video" autoplay muted loop>
+                <source src="https://videos.pexels.com/video-files/8533891/8533891-hd_1920_1080_30fps.mp4" type="video/mp4">
+            </video>
+            <div class="hero-content">
+                <h1>Inovação Sem Limites</h1>
+                <p>Transformamos o futuro com tecnologia de ponta e soluções criativas.</p>
+                <div class="banner">
+                    <p><strong>Oferta Especial:</strong> 10% de desconto na primeira consulta!</p>
+                </div>
+                <a href="#contact" class="cta-button">Comece Agora</a>
+            </div>
+        </section>
+        <section id="services" class="services">
+            <h2>Nossos Serviços</h2>
+            <article>
+                <ul>
+                    <li class="service-item tech"><i class="fas fa-laptop"></i> Desenvolvimento de Software Personalizado</li>
+                    <li class="service-item tech"><i class="fas fa-brain"></i> Inteligência Artificial e Machine Learning</li>
+                    <li class="service-item support"><i class="fas fa-chart-line"></i> Consultoria Estratégica em Tecnologia</li>
+                    <li class="service-item support"><i class="fas fa-headset"></i> Suporte Técnico 24/7</li>
+                </ul>
+                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&q=80&w=1200&auto=format&fit=crop" alt="Tecnologia Corporativa" style="max-width: 100%; margin-top: 1.5rem; border-radius: 10px;">
+            </article>
+            <div class="filters" style="margin-top: 1.5rem;">
+                <button onclick="filterServices('all')" style="padding: 0.5rem 1rem; background: #1e3a8a; color: white; border-radius: 5px; margin-right: 0.5rem;">Todos</button>
+                <button onclick="filterServices('tech')" style="padding: 0.5rem 1rem; background: #1e3a8a; color: white; border-radius: 5px; margin-right: 0.5rem;">Tecnologia</button>
+                <button onclick="filterServices('support')" style="padding: 0.5rem 1rem; background: #1e3a8a; color: white; border-radius: 5px;">Suporte</button>
+            </div>
+        </section>
+        <div class="parallax" style="background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&q=80&w=1920&auto=format&fit=crop');"></div>
+        <section id="about" class="about">
+            <h2>Sobre Nós</h2>
+            <article>
+                <p>Com 15 anos de excelência, somos líderes em inovação tecnológica.</p>
+                <ul>
+                    <li><i class="fas fa-bullseye"></i> Missão: Impulsionar a inovação global</li>
+                    <li><i class="fas fa-eye"></i> Visão: Ser referência em tecnologia</li>
+                    <li><i class="fas fa-hands-helping"></i> Valores: Excelência, Integridade, Colaboração</li>
+                </ul>
+                <video autoplay muted loop style="max-width: 100%; margin-top: 1.5rem; border-radius: 10px;">
+                    <source src="https://videos.pexels.com/video-files/8533891/8533891-hd_1920_1080_30fps.mp4" type="video/mp4">
+                </video>
+                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&q=80&w=1200&auto=format&fit=crop" alt="Equipe EmpresaX" style="max-width: 100%; margin-top: 1.5rem; border-radius: 10px;">
+                <div class="stats" style="margin-top: 1.5rem;">
+                    <span>0 <i class="fas fa-trophy"></i> Anos</span>
+                    <span>0 <i class="fas fa-users"></i> Clientes</span>
+                    <span>0 <i class="fas fa-project-diagram"></i> Projetos</span>
+                </div>
+            </article>
+        </section>
+        <section id="testimonials" class="testimonials">
+            <h2>Depoimentos</h2>
+            <article>
+                <div class="testimonials-slider" id="testimonialSlider">
+                    <div class="testimonial">"Excelente serviço! Recomendo a todos!" - João Silva</div>
+                    <div class="testimonial">"Inovação de ponta, equipe incrível!" - Maria Oliveira</div>
+                    <div class="testimonial">"Soluções rápidas e eficazes." - Pedro Santos</div>
+                </div>
+            </article>
+        </section>
+        <section id="gallery" class="gallery">
+            <h2>Galeria de Projetos</h2>
+            <article>
+                <div class="gallery-grid">
+                    <div class="gallery-item"><img src="https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&q=80&w=250&auto=format&fit=crop" alt="Projeto 1"></div>
+                    <div class="gallery-item"><img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&q=80&w=250&auto=format&fit=crop" alt="Projeto 2"></div>
+                    <div class="gallery-item"><img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&q=80&w=250&auto=format&fit=crop" alt="Projeto 3"></div>
+                </div>
+            </article>
+        </section>
+        <section id="pricing" class="pricing">
+            <h2>Planos</h2>
+            <article>
+                <div class="pricing-table">
+                    <div class="pricing-card">Básico<br>$99/mês<br>1 Projeto</div>
+                    <div class="pricing-card">Padrão<br>$199/mês<br>3 Projetos</div>
+                    <div class="pricing-card">Premium<br>$299/mês<br>5 Projetos</div>
+                </div>
+            </article>
+        </section>
+        <section id="faq" class="faq">
+            <h2>Perguntas Frequentes</h2>
+            <article id="faqContainer">
+                <div class="faq-item">
+                    <div class="faq-question">Como funciona?</div>
+                    <div class="faq-answer">Nosso processo é simples: consulta, planejamento e execução.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Quanto custa?</div>
+                    <div class="faq-answer">Os preços variam por plano, veja nossa tabela.</div>
+                </div>
+            </article>
+        </section>
+        <section id="contact" class="contact">
+            <h2>Entre em Contato</h2>
+            <article>
+                <p>Siga os passos abaixo:</p>
+                <ol>
+                    <li><i class="fas fa-user"></i> Preencha o formulário</li>
+                    <li><i class="fas fa-paper-plane"></i> Envie sua mensagem</li>
+                    <li><i class="fas fa-clock"></i> Aguarde resposta em 24h</li>
+                </ol>
+                <form id="contactForm">
+                    <input type="text" placeholder="Nome" required>
+                    <input type="email" placeholder="E-mail" required>
+                    <input type="tel" placeholder="Telefone" required>
+                    <select name="subject" required>
+                        <option value="">Assunto</option>
+                        <option value="consulting">Consultoria</option>
+                        <option value="support">Suporte</option>
+                    </select>
+                    <textarea placeholder="Mensagem" required></textarea>
+                    <button type="submit">Enviar Mensagem</button>
+                </form>
+                <img src="https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?ixlib=rb-4.0.3&q=80&w=1200&auto=format&fit=crop" alt="Contato Empresarial" style="max-width: 100%; margin-top: 1.5rem; border-radius: 10px;">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3656.231!2d-46.633!3d-23.550!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce!2sSão Paulo!5e0!3m2!1spt!2sbr!4v1623456789!5m2!1spt!2sbr" width="600" height="450" style="border:0; margin-top: 1.5rem;" allowfullscreen="" loading="lazy"></iframe>
+            </article>
+            <div id="chat" style="position: fixed; bottom: 1rem; right: 1rem; background: #1e3a8a; color: white; padding: 0.5rem; border-radius: 5px; cursor: pointer;">Chat</div>
+            <a href="#" class="download-btn" style="position: fixed; bottom: 4rem; right: 1rem; background: #1e3a8a; color: white; padding: 0.5rem; border-radius: 5px; text-decoration: none;">Download PDF</a>
+        </section>
+    </main>
+    <footer>
+        <p>© 2025 EmpresaX - <a href="#terms">Termos</a> | <a href="#privacy">Privacidade</a></p>
+        <div class="social-links" style="margin-top: 0.5rem;">
+            <a href="#" style="margin: 0 0.5rem; color: #1e3a8a; font-size: 1.5rem;"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" style="margin: 0 0.5rem; color: #1e3a8a; font-size: 1.5rem;"><i class="fab fa-twitter"></i></a>
+            <a href="#" style="margin: 0 0.5rem; color: #1e3a8a; font-size: 1.5rem;"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+    </footer>
+    <div class="back-to-top" onclick="scrollToTop()" style="position: fixed; bottom: 2rem; right: 2rem; background: #1e3a8a; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.3s ease;">↑</div>
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+        gsap.from(".hero-content", { opacity: 0, y: 40, duration: 1.2, ease: "power2.out" });
+        gsap.from(".banner", { opacity: 0, y: 20, duration: 1.2, delay: 0.4, ease: "power2.out" });
+        gsap.utils.toArray("section").forEach(section => {
+            ScrollTrigger.create({
+                trigger: section,
+                start: "top 80%",
+                onEnter: () => gsap.from(section, { opacity: 0, y: 40, duration: 0.8, ease: "power2.out" })
+            });
+        });
+
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+        hamburger.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        const contactForm = document.getElementById('contactForm');
+        contactForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Mensagem enviada com sucesso! Em breve entraremos em contato.');
+            contactForm.reset();
+        });
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const header = document.querySelector('header');
+            header.classList.toggle('dark-mode');
+            const navLinks = document.querySelectorAll('.nav-links li a');
+            navLinks.forEach(link => link.classList.toggle('dark-mode'));
+            const sections = document.querySelectorAll('section');
+            sections.forEach(section => section.classList.toggle('dark-mode'));
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => form.classList.toggle('dark-mode'));
+            const ctaButtons = document.querySelectorAll('.cta-button');
+            ctaButtons.forEach(button => button.classList.toggle('dark-mode'));
+            const footer = document.querySelector('footer');
+            footer.classList.toggle('dark-mode');
+            const socialLinks = document.querySelectorAll('.social-links a');
+            socialLinks.forEach(link => link.classList.toggle('dark-mode'));
+            const backToTop = document.querySelector('.back-to-top');
+            backToTop.classList.toggle('dark-mode');
+            const loader = document.querySelector('.loader');
+            loader.classList.toggle('dark-mode');
+            const spinner = document.querySelector('.spinner');
+            spinner.classList.toggle('dark-mode');
+            const filters = document.querySelectorAll('.filters button');
+            filters.forEach(button => button.classList.toggle('dark-mode'));
+            const chat = document.getElementById('chat');
+            chat.classList.toggle('dark-mode');
+            const downloadBtn = document.querySelector('.download-btn');
+            downloadBtn.classList.toggle('dark-mode');
+        }
+
+        function filterServices(category) {
+            const items = document.querySelectorAll('.service-item');
+            items.forEach(item => {
+                const itemCategory = item.getAttribute('data-category');
+                if (category === 'all' || itemCategory === category) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        document.getElementById('faqContainer').addEventListener('click', (e) => {
+            if (e.target.classList.contains('faq-question')) {
+                const item = e.target.parentElement;
+                item.classList.toggle('active');
+            }
+        });
+
+        window.addEventListener('load', () => {
+            const stats = document.querySelector('.stats');
+            if (stats) {
+                const spans = stats.querySelectorAll('span');
+                if (spans.length > 0) {
+                    gsap.from(spans, {
+                        textContent: 0,
+                        duration: 2,
+                        ease: "power1.out",
+                        snap: { textContent: 1 },
+                        stagger: 0.5,
+                        onUpdate: function() {
+                            const targets = this.targets();
+                            if (targets && targets.length > 0) {
+                                targets.forEach((target, index) => {
+                                    target.textContent = Math.ceil(this.values[index] || 0);
+                                });
+                            }
+                        },
+                        onComplete: function() {
+                            const targets = this.targets();
+                            if (targets && targets.length > 0) {
+                                targets.forEach((target, index) => {
+                                    const originalText = ['15', '500+', '1000+'][index] || '';
+                                    const icon = target.querySelector('i') ? target.querySelector('i').outerHTML : '';
+                                    target.textContent = originalText + (icon ? ' ' + icon : '');
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+
+            const slider = document.getElementById('testimonialSlider');
+            let scrollPos = 0;
+            function slideTestimonials() {
+                scrollPos -= 320;
+                if (scrollPos <= -960) scrollPos = 0;
+                slider.style.transform = `translateX(${scrollPos}px)`;
+            }
+            setInterval(slideTestimonials, 3000);
+        });
+
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+            const backToTop = document.querySelector('.back-to-top');
+            if (window.scrollY > 300) {
+                backToTop.classList.add('show');
+            } else {
+                backToTop.classList.remove('show');
+            }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        const chat = document.getElementById('chat');
+        chat.addEventListener('click', () => alert('Chat ao vivo iniciado!'));
+
+        const downloadBtn = document.querySelector('.download-btn');
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.href = '#'; // Substitua por link real do PDF
+            link.download = 'empresaX_info.pdf';
+            link.click();
+        });
+
+        const loader = document.querySelector('.loader');
+        setTimeout(() => loader.classList.add('hidden'), 1500);
+    </script>
+</body>
+</html>
