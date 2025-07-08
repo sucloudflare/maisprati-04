@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -50,7 +11,7 @@
         body {
             background: linear-gradient(135deg, #f0f2f5, #dee2e6, #e9ecef);
             background-size: 300% 300%;
-            animation: holographicGradient 20s ease infinite;
+            animation: gradienteHolografico 20s ease infinite;
             font-family: 'Roboto Condensed', sans-serif;
             color: #333333;
             line-height: 1.8;
@@ -66,7 +27,7 @@
             background: linear-gradient(135deg, #1a202c, #2d3748, #4a5568);
             color: #e2e8f0;
         }
-        @keyframes holographicGradient {
+        @keyframes gradienteHolografico {
             0% { background-position: 0% 0%; }
             50% { background-position: 100% 100%; }
             100% { background-position: 0% 0%; }
@@ -542,13 +503,13 @@
             border-radius: 50%;
             width: 40px;
             height: 40px;
-            animation: spin 1s linear infinite;
+            animation: giro 1s linear infinite;
         }
         .spinner.dark-mode {
             border-color: #e2e8f0;
             border-top-color: #4b6cb7;
         }
-        @keyframes spin {
+        @keyframes giro {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
@@ -585,13 +546,13 @@
             <div class="hamburger">☰</div>
             <nav>
                 <ul class="nav-links">
-                    <li><a href="#home">Home</a></li>
+                    <li><a href="#home">Início</a></li>
                     <li><a href="#services">Serviços</a></li>
                     <li><a href="#about">Sobre</a></li>
                     <li><a href="#contact">Contato</a></li>
                 </ul>
             </nav>
-            <button onclick="toggleDarkMode()" style="margin-left: 1rem; color: #1e3a8a; cursor: pointer;">🌙</button>
+            <button onclick="alternarModoEscuro()" style="margin-left: 1rem; color: #1e3a8a; cursor: pointer;">🌙</button>
         </div>
     </header>
     <main>
@@ -624,9 +585,9 @@
                 <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&q=80&w=1200&auto=format&fit=crop" alt="Tecnologia Corporativa" style="max-width: 100%; margin-top: 1.5rem; border-radius: 10px;">
             </article>
             <div class="filters" style="margin-top: 1.5rem;">
-                <button onclick="filterServices('all')" style="padding: 0.5rem 1rem; background: #1e3a8a; color: white; border-radius: 5px; margin-right: 0.5rem;">Todos</button>
-                <button onclick="filterServices('tech')" style="padding: 0.5rem 1rem; background: #1e3a8a; color: white; border-radius: 5px; margin-right: 0.5rem;">Tecnologia</button>
-                <button onclick="filterServices('support')" style="padding: 0.5rem 1rem; background: #1e3a8a; color: white; border-radius: 5px;">Suporte</button>
+                <button onclick="filtrarServicos('all')" style="padding: 0.5rem 1rem; background: #1e3a8a; color: white; border-radius: 5px; margin-right: 0.5rem;">Todos</button>
+                <button onclick="filtrarServicos('tech')" style="padding: 0.5rem 1rem; background: #1e3a8a; color: white; border-radius: 5px; margin-right: 0.5rem;">Tecnologia</button>
+                <button onclick="filtrarServicos('support')" style="padding: 0.5rem 1rem; background: #1e3a8a; color: white; border-radius: 5px;">Suporte</button>
             </div>
         </section>
         <div class="parallax" style="background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&q=80&w=1920&auto=format&fit=crop');"></div>
@@ -674,9 +635,9 @@
             <h2>Planos</h2>
             <article>
                 <div class="pricing-table">
-                    <div class="pricing-card">Básico<br>$99/mês<br>1 Projeto</div>
-                    <div class="pricing-card">Padrão<br>$199/mês<br>3 Projetos</div>
-                    <div class="pricing-card">Premium<br>$299/mês<br>5 Projetos</div>
+                    <div class="pricing-card">Básico<br>R$99/mês<br>1 Projeto</div>
+                    <div class="pricing-card">Padrão<br>R$199/mês<br>3 Projetos</div>
+                    <div class="pricing-card">Premium<br>R$299/mês<br>5 Projetos</div>
                 </div>
             </article>
         </section>
@@ -718,7 +679,7 @@
                 <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3656.231!2d-46.633!3d-23.550!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce!2sSão Paulo!5e0!3m2!1spt!2sbr!4v1623456789!5m2!1spt!2sbr" width="600" height="450" style="border:0; margin-top: 1.5rem;" allowfullscreen="" loading="lazy"></iframe>
             </article>
             <div id="chat" style="position: fixed; bottom: 1rem; right: 1rem; background: #1e3a8a; color: white; padding: 0.5rem; border-radius: 5px; cursor: pointer;">Chat</div>
-            <a href="#" class="download-btn" style="position: fixed; bottom: 4rem; right: 1rem; background: #1e3a8a; color: white; padding: 0.5rem; border-radius: 5px; text-decoration: none;">Download PDF</a>
+            <a href="#" class="download-btn" style="position: fixed; bottom: 4rem; right: 1rem; background: #1e3a8a; color: white; padding: 0.5rem; border-radius: 5px; text-decoration: none;">Baixar PDF</a>
         </section>
     </main>
     <footer>
@@ -729,7 +690,7 @@
             <a href="#" style="margin: 0 0.5rem; color: #1e3a8a; font-size: 1.5rem;"><i class="fab fa-linkedin-in"></i></a>
         </div>
     </footer>
-    <div class="back-to-top" onclick="scrollToTop()" style="position: fixed; bottom: 2rem; right: 2rem; background: #1e3a8a; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.3s ease;">↑</div>
+    <div class="back-to-top" onclick="voltarAoTopo()" style="position: fixed; bottom: 2rem; right: 2rem; background: #1e3a8a; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.3s ease;">↑</div>
     <script>
         gsap.registerPlugin(ScrollTrigger);
         gsap.from(".hero-content", { opacity: 0, y: 40, duration: 1.2, ease: "power2.out" });
@@ -755,7 +716,7 @@
             contactForm.reset();
         });
 
-        function toggleDarkMode() {
+        function alternarModoEscuro() {
             document.body.classList.toggle('dark-mode');
             const header = document.querySelector('header');
             header.classList.toggle('dark-mode');
@@ -785,11 +746,11 @@
             downloadBtn.classList.toggle('dark-mode');
         }
 
-        function filterServices(category) {
-            const items = document.querySelectorAll('.service-item');
-            items.forEach(item => {
-                const itemCategory = item.getAttribute('data-category');
-                if (category === 'all' || itemCategory === category) {
+        function filtrarServicos(categoria) {
+            const itens = document.querySelectorAll('.service-item');
+            itens.forEach(item => {
+                const categoriaItem = item.getAttribute('data-category');
+                if (categoria === 'all' || categoriaItem === categoria) {
                     item.style.display = 'flex';
                 } else {
                     item.style.display = 'none';
@@ -827,9 +788,9 @@
                             const targets = this.targets();
                             if (targets && targets.length > 0) {
                                 targets.forEach((target, index) => {
-                                    const originalText = ['15', '500+', '1000+'][index] || '';
-                                    const icon = target.querySelector('i') ? target.querySelector('i').outerHTML : '';
-                                    target.textContent = originalText + (icon ? ' ' + icon : '');
+                                    const textoOriginal = ['15', '500+', '1000+'][index] || '';
+                                    const icone = target.querySelector('i') ? target.querySelector('i').outerHTML : '';
+                                    target.textContent = textoOriginal + (icone ? ' ' + icone : '');
                                 });
                             }
                         }
@@ -839,12 +800,12 @@
 
             const slider = document.getElementById('testimonialSlider');
             let scrollPos = 0;
-            function slideTestimonials() {
+            function deslizarDepoimentos() {
                 scrollPos -= 320;
                 if (scrollPos <= -960) scrollPos = 0;
                 slider.style.transform = `translateX(${scrollPos}px)`;
             }
-            setInterval(slideTestimonials, 3000);
+            setInterval(deslizarDepoimentos, 3000);
         });
 
         window.addEventListener('scroll', () => {
@@ -862,7 +823,7 @@
             }
         });
 
-        function scrollToTop() {
+        function voltarAoTopo() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -879,6 +840,45 @@
 
         const loader = document.querySelector('.loader');
         setTimeout(() => loader.classList.add('hidden'), 1500);
+
+        var gk_eXlsx = false;
+        var gk_xlsxArquivoPesquisa = {};
+        var gk_dadosArquivo = {};
+        function celulaPreenchida(celula) {
+          return celula !== '' && celula != null;
+        }
+        function carregarDadosArquivo(nomeArquivo) {
+          if (gk_eXlsx && gk_xlsxArquivoPesquisa[nomeArquivo]) {
+              try {
+                  var planilha = XLSX.read(gk_dadosArquivo[nomeArquivo], { type: 'base64' });
+                  var primeiroNomeAba = planilha.SheetNames[0];
+                  var aba = planilha.Sheets[primeiroNomeAba];
+
+                  // Converter aba para JSON para filtrar linhas em branco
+                  var dadosJson = XLSX.utils.sheet_to_json(aba, { header: 1, blankrows: false, defval: '' });
+                  // Filtrar linhas em branco (linhas onde todas as células estão vazias, nulas ou indefinidas)
+                  var dadosFiltrados = dadosJson.filter(linha => linha.some(celulaPreenchida));
+
+                  // Heurística para encontrar a linha de cabeçalho ignorando linhas com menos células preenchidas que a próxima
+                  var indiceLinhaCabecalho = dadosFiltrados.findIndex((linha, indice) =>
+                    linha.filter(celulaPreenchida).length >= dadosFiltrados[indice + 1]?.filter(celulaPreenchida).length
+                  );
+                  // Fallback
+                  if (indiceLinhaCabecalho === -1 || indiceLinhaCabecalho > 25) {
+                    indiceLinhaCabecalho = 0;
+                  }
+
+                  // Converter JSON filtrado de volta para CSV
+                  var csv = XLSX.utils.aoa_to_sheet(dadosFiltrados.slice(indiceLinhaCabecalho)); // Criar uma nova aba a partir do array de arrays filtrado
+                  csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                  return csv;
+              } catch (e) {
+                  console.error(e);
+                  return "";
+              }
+          }
+          return gk_dadosArquivo[nomeArquivo] || "";
+        }
     </script>
 </body>
 </html>
